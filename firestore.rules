@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  function isAuthenticated() {
+    return request.auth != null && request.auth.token.email != null;
+  }
+
+  function isAdmin() {
+    let userEmail = request.auth.token.email;
+    return isAuthenticated() && exists(/databases/$(database)/documents/admins/$(userEmail));
+  }
+
+  match /databases/{database}/documents {
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /admins/{adminEmail} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}
