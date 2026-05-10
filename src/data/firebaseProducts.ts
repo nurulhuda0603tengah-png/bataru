@@ -6,6 +6,7 @@ import {
   orderBy,
   doc,
   updateDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 
@@ -205,6 +206,16 @@ export async function updateOrderStatus(orderId: string, status: string) {
     await updateDoc(orderRef, { status });
   } catch (error) {
     console.error("Error updating order status:", error);
+    throw error;
+  }
+}
+
+export async function deleteProduct(productId: string) {
+  try {
+    const productRef = doc(db, "products", productId);
+    await deleteDoc(productRef);
+  } catch (error) {
+    console.error("Error deleting product:", error);
     throw error;
   }
 }

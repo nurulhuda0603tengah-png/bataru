@@ -3,6 +3,7 @@ import {
   addProduct,
   getOrders,
   getProducts,
+  deleteProduct,
   type Order,
   type Product,
   updateOrderStatus,
@@ -145,6 +146,18 @@ export function AdminPage({ userEmail, onSignOut }: AdminPageProps) {
     }
   };
 
+  const handleDeleteProduct = async (productId: string) => {
+    if (!confirm("Apakah kamu yakin ingin menghapus produk ini?")) return;
+    try {
+      await deleteProduct(productId);
+      setStatusMessage("Produk berhasil dihapus.");
+      await loadProducts();
+    } catch (error) {
+      setStatusMessage("Gagal menghapus produk.");
+      console.error(error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -282,9 +295,18 @@ export function AdminPage({ userEmail, onSignOut }: AdminPageProps) {
                             Rp{product.price.toLocaleString("id-ID")}
                           </p>
                         </div>
-                        <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
-                          {product.tag}
-                        </span>
+                        <div className="flex items-center gap-3">
+                          <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
+                            {product.tag}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteProduct(product.id)}
+                            className="rounded-full bg-red-100 px-4 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-200"
+                          >
+                            Hapus
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -439,6 +461,170 @@ export function AdminPage({ userEmail, onSignOut }: AdminPageProps) {
             )}
           </section>
         </div>
+
+        {/* Rekapitulasi Penjualan */}
+        <section className="mt-8 rounded-[2rem] border border-slate-200 bg-white p-8 shadow-glass">
+          <h2 className="text-2xl font-semibold text-slate-900">
+            Rekapitulasi Penjualan
+          </h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Ringkasan pesanan yang sudah dikirim dan selesai.
+          </p>
+
+          {loadingOrders ? (
+            <p className="mt-6 text-slate-500">Memuat data penjualan...</p>
+          ) : (
+            <div className="mt-6 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <th className="px-4 py-3 text-left font-semibold text-slate-900">
+                      Order ID
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-900">
+                      Pelanggan
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-900">
+                      Produk
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-900">
+                      Qty
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-900">
+                      Total
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-900">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.filter(
+                    (order) =>
+                      order.status === "dikirim" || order.status === "selesai",
+                  ).length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="px-4 py-6 text-center text-slate-500"
+                      >
+                        Belum ada pesanan yang dikirim atau selesai.
+                      </td>
+                    </tr>
+                  ) : (
+                    orders
+                      .filter(
+                        (order) =>
+                          order.status === "dikirim" ||
+                          order.status === "selesai",
+                      )
+                      .map((order) =>
+                        order.items.map((item, idx) => (
+                          <tr
+                            key={`${order.id}-${idx}`}
+                            className="border-b border-slate-100 hover:bg-slate-50"
+                          >
+                            <td className="px-4 py-3 font-mono text-xs text-slate-700">
+                              {idx === 0 ? order.id.slice(0, 8) : "-"}
+                            </td>
+                            <td className="px-4 py-3 text-slate-900">
+                              {idx === 0 ? order.customerName : "-"}
+                            </td>
+                            <td className="px-4 py-3 text-slate-900">
+                              {item.name}
+                            </td>
+                            <td className="px-4 py-3 text-slate-700">
+                              {item.quantity}
+                            </td>
+                            <td className="px-4 py-3 font-semibold text-slate-900">
+                              Rp
+                              {(item.price * item.quantity).toLocaleString(
+                                "id-ID",
+                              )}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                  order.status === "selesai"
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-blue-100 text-blue-700"
+                                }`}
+                              >
+                                {order.status === "selesai"
+                                  ? "Selesai"
+                                  : "Dikirim"}
+                              </span>
+                            </td>
+                          </tr>
+                        )),
+                      )
+                  )}
+                </tbody>
+              </table>
+
+              {/* Summary */}
+              {orders.filter(
+                (order) =>
+                  order.status === "dikirim" || order.status === "selesai",
+              ).length > 0 && (
+                <div className="mt-6 rounded-[1.75rem] border border-slate-200 bg-slate-50 p-4">
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div>
+                      <p className="text-xs text-slate-600 uppercase tracking-[0.3em]">
+                        Total Pesanan Terselesaikan
+                      </p>
+                      <p className="mt-2 text-2xl font-bold text-slate-900">
+                        {
+                          orders.filter(
+                            (o) =>
+                              o.status === "dikirim" || o.status === "selesai",
+                          ).length
+                        }
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-600 uppercase tracking-[0.3em]">
+                        Total Penjualan
+                      </p>
+                      <p className="mt-2 text-2xl font-bold text-slate-900">
+                        Rp
+                        {orders
+                          .filter(
+                            (o) =>
+                              o.status === "dikirim" || o.status === "selesai",
+                          )
+                          .reduce((sum, o) => sum + o.totalPrice, 0)
+                          .toLocaleString("id-ID")}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-600 uppercase tracking-[0.3em]">
+                        Rata-rata Per Pesanan
+                      </p>
+                      <p className="mt-2 text-2xl font-bold text-slate-900">
+                        Rp
+                        {Math.round(
+                          orders
+                            .filter(
+                              (o) =>
+                                o.status === "dikirim" ||
+                                o.status === "selesai",
+                            )
+                            .reduce((sum, o) => sum + o.totalPrice, 0) /
+                            (orders.filter(
+                              (o) =>
+                                o.status === "dikirim" ||
+                                o.status === "selesai",
+                            ).length || 1),
+                        ).toLocaleString("id-ID")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );
