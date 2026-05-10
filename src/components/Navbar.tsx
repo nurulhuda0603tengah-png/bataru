@@ -8,9 +8,11 @@ export function Navbar({ totalItems, onCartClick }: NavbarProps) {
     <header className="border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-bataru-500 text-white shadow-glass">
-            B
-          </div>
+          <img
+            src="/logo.png"
+            alt="Logo Koperasi BATARU"
+            className="h-12 w-12 rounded-2xl object-contain shadow-glass"
+          />
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.4em] text-bataru-700">
               Koperasi BATARU
